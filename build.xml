@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="docker" default="default" phingVersion="2.8.0" description="An R and nodejs image with vagrant ssh key and user installed for use with Vagrant.">
+
+	<property environment="env" />
+
+	<property name="image.version" value="0.0.1" />
+	<property name="dockerfile.dir" value="${project.basedir}" />
+	<property name="image.name" value="vagrant-node-r" />
+
+	<property name="private.repo" value="private_indexer.internal:5000" />
+	<property name="repo" value="mtbvang" />
+
+	<target name="default" depends="" description="Prints out public targets in this project.">
+		<exec command="phing -l" passthru="true" />
+	</target>
+
+	<target name="build" depends="remove-image, 
+	    build-image, 
+	    tag-image" description="Removes, builds, tags and pushes the image to the private registry." />
+
+	<target name="build-image" description="Calls the build-image target with the default options.">
+		<exec command="docker build -t ${repo}/${image.name}:${image.version} ." passthru="true" />
+	</target>
+
+	<target name="remove-image" description="Calls the remove-image target with the default options for Ubuntu Trusty Upstart image.">
+		<exec command="docker rmi ${repo}/${image.name}:${image.version}" passthru="true" />
+		<exec command="docker rmi ${private.repo}/${image.name}:${image.version}" passthru="true" />
+	</target>
+
+	<target name="tag-image" description="Calls the tag-image target with the default options for Ubuntu Trusty Upstart image.">
+		<exec command="docker tag -f ${repo}/${image.name}:${image.version} ${repo}/${image.name}:latest" passthru="true" />
+	</target>
+
+	<target name="push-image" description="Pushes and the image to the registry running at private.repo.">
+		<exec command="docker push ${private.repo}/${image.name}" passthru="true" />
+	</target>
+
+	<target name="start-registry" description="Starts a local private registry running at the location specified by private.repo property. Required for the push command to work if one is not already running and resolvable by the name specified by private.repo property">
+		<exec command="docker run -d -p 5000:5000 registry" passthru="true" />
+	</target>
+
+	<target name="docker-remove-all-images" description="Warning: This will destroy all your images. It will not be possible to restore them!">
+		<exec command="docker rmi -f $(docker images -q)" passthru="true" />
+	</target>
+
+	<target name="docker-remove-all-containers" depends="docker-stop-all-containers" description="Warning: This will destroy all your containers. It will not be possible to restore them!">
+		<exec command="docker rm -f $(docker ps -a -q)" passthru="true" />
+	</target>
+
+	<target name="docker-stop-all-containers" description="Stops all containers.">
+		<exec command="docker stop $(docker ps -a -q)" passthru="true" />
+	</target>
+
+	<target name="run-container" description="Example of how to run a container in interactivemode with the main options settable.">
+		<property name="option.ssh.port" value="2223:22" />
+		<property name="option.http.port" value="8084:8080" />
+		<property name="option.name" value="testing" />
+		<property name="option.cmd" value="/bin/bash" />
+		<property name="option.image" value="private_indexer.internal:5000/${image.name}:${image.version}" />
+		<property name="run.cmd" value="docker run -i -t --name ${option.name} -d -p ${option.http.port} -p ${option.ssh.port} --privileged ${opton.image} ${option.cmd}" />
+		<exec command="${run.cmd}" passthru="true" />
+	</target>
+
+</project>
