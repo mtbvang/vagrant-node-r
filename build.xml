@@ -3,7 +3,7 @@
 
 	<property environment="env" />
 
-	<property name="image.version" value="0.0.1" />
+	<property name="image.version" value="0.0.2" />
 	<property name="dockerfile.dir" value="${project.basedir}" />
 	<property name="image.name" value="vagrant-node-r" />
 

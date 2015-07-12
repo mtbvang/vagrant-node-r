@@ -17,6 +17,7 @@ RUN apt-get update \
     locales \
     vim-tiny \
     wget \
+    curl \
   && rm -rf /var/lib/apt/lists/*
 
 ## Configure default locale, see https://github.com/rocker-org/rocker/issues/19
@@ -27,17 +28,21 @@ RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 
-## Use Debian unstable via pinning -- new style via APT::Default-Release
-RUN echo "deb http://http.debian.net/debian sid main" > /etc/apt/sources.list.d/debian-unstable.list \
-  && echo 'APT::Default-Release "jessie";' > /etc/apt/apt.conf.d/default
+## 
+RUN echo "deb http://cran.rstudio.com/bin/linux/debian jessie-cran3/" >> /etc/apt/sources.list \
+  && apt-get update
 
-ENV R_BASE_VERSION 3.2.0
+RUN gpg --keyserver pgpkeys.mit.edu --recv-key  06F90DE5381BA480 \
+  && gpg -a --export 06F90DE5381BA480 | apt-key add - 
+   
+
+ENV R_BASE_VERSION 3.2.1
 
 ## Now install R and littler, and create a link for littler in /usr/local/bin
 ## Also set a default CRAN repo, and make sure littler knows about it too
 RUN apt-get update \
-  && apt-get install -t unstable -y --no-install-recommends \
-    littler/unstable \
+  && apt-get install -y --no-install-recommends \
+    littler \
     r-base=${R_BASE_VERSION}* \
     r-base-dev=${R_BASE_VERSION}* \
     r-recommended=${R_BASE_VERSION}* \
